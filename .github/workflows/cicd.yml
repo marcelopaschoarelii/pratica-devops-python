@@ -39,3 +39,24 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/pratica-devops-python:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/pratica-devops-python:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/pratica-devops-python:${{ github.ref_name }}
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+      - name: Bump version
+        id: bump
+        run: |
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG#v}"
+          PATCH=$((PATCH + 1))
+          NEW_TAG="v$MAJOR.$MINOR.$PATCH"
+          git tag $NEW_TAG
+          git push origin $NEW_TAG
+          echo "NEW_TAG=$NEW_TAG" >> $GITHUB_ENV
